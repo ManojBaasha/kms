@@ -1,3 +1,12 @@
+/**
+ * File: main.js
+ * Description: This file serves as the entry point for the React application.
+ * This is the main rooting page which consists of the navigation and operations for edit, delete and create converations.
+ * Most places refer to "contact" which describes the conact of the person you're having the conversation with.
+ * 
+ * Author: Manoj Elango [melango@ucdavis.edu]
+ */
+
 import * as React from "react";
 import * as ReactDOM from "react-dom/client";
 import ErrorPage from "./error-page";

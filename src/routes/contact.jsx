@@ -1,7 +1,22 @@
+/**
+ * File: Contact.js
+ * Description: This file defines the Contact component, which displays contact information and chat messages.
+ * The component includes features for editing, deleting, and marking a contact as a favorite. It also handles
+ * user prompts and messages within a chat interface.
+ * 
+ * Author: Manoj Elango [melango@ucdavis.edu]
+ */
+
 import { Form, useLoaderData, useFetcher, } from "react-router-dom";
 import { getContact, updateContact } from "../contacts";
 import "./contact.css";
 
+/**
+ * Loader function for fetching contact details based on the contactId parameter.
+ * Throws a 404 error if the contact is not found.
+ * @param {Object} params - The route parameters, including contactId.
+ * @returns {Object} - Object containing the fetched contact details.
+ */
 export async function loader({ params }) {
   const contact = await getContact(params.contactId);
   if (!contact) {
@@ -13,6 +28,11 @@ export async function loader({ params }) {
   return { contact };
 }
 
+/**
+ * Action function for updating the favorite status of a contact based on the form data.
+ * @param {Object} options - Options object containing the request and params.
+ * @returns {Promise} - Promise representing the updateContact operation.
+ */
 export async function action({ request, params }) {
   let formData = await request.formData();
   return updateContact(params.contactId, {
@@ -20,6 +40,10 @@ export async function action({ request, params }) {
   });
 }
 
+/**
+ * Contact component for displaying contact information and chat messages.
+ * Also includes options for editing, deleting, and marking as a favorite.
+ */
 export default function Contact() {
 
   const { contact } = useLoaderData();
@@ -319,6 +343,14 @@ export default function Contact() {
   );
 }
 
+/**
+ * Component: Favorite
+ * Description: This component represents the favorite button for a contact.
+ * It utilizes the useFetcher hook to handle form submissions and updates the contact's favorite status accordingly.
+ * The button toggles between a filled star (★) and an empty star (☆) based on the contact's favorite status.
+ * @param {Object} contact - Contact information
+ * @returns {JSX.Element} - Favorite button component
+ */
 function Favorite({ contact }) {
   const fetcher = useFetcher();
   // yes, this is a `let` for later
