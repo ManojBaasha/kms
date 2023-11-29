@@ -1,3 +1,7 @@
+import {
+  Form,
+} from "react-router-dom";
+
 export default function Index() {
     return (
       <p id="zero-state">
@@ -8,6 +12,9 @@ export default function Index() {
           the docs at reactrouter.com
         </a>
         .
+        <Form method="post">
+            <button type="submit">New</button>
+        </Form>
       </p>
     );
   }
