@@ -37,9 +37,9 @@ const router = createBrowserRouter([
         errorElement: <ErrorPage />,
         children: [
 
-          { 
-            index: true, 
-            element: <Index /> ,
+          {
+            index: true,
+            element: <Index />,
             action: rootAction, // function to create a new contact page 
           },
           {
@@ -65,8 +65,9 @@ const router = createBrowserRouter([
   },
 ]);
 
-ReactDOM.createRoot(document.getElementById("root")).render(
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
   <React.StrictMode>
-    <RouterProvider router={router} />
+  <RouterProvider router={router} />
   </React.StrictMode>
 );
