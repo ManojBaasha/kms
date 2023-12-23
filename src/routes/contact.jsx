@@ -3,13 +3,43 @@
  * Description: This file defines the Contact component, which displays contact information and chat messages.
  * The component includes features for editing, deleting, and marking a contact as a favorite. It also handles
  * user prompts and messages within a chat interface.
- * 
+ *
  * Author: Manoj Elango [melango@ucdavis.edu]
  */
 
-import { Form, useLoaderData, useFetcher, } from "react-router-dom";
+import { Form, useLoaderData, useFetcher } from "react-router-dom";
 import { getContact, updateContact } from "../contacts";
 import "./contact.css";
+import React, { useState } from "react";
+import { db, auth } from "../../firebaseconfigs";
+import {
+  collection,
+  addDoc,
+  where,
+  serverTimestamp,
+  onSnapshot,
+  query,
+  orderBy,
+} from "firebase/firestore";
+
+const initialMessages = [
+  {
+    user: "user1",
+    text: "Explain quantum computing in simple terms",
+  },
+  {
+    user: "user2",
+    text: "Certainly! Quantum computing is a new type of computing that relies on the principles of quantum physics...",
+  },
+  {
+    user: "user1",
+    text: "What are three great applications of quantum computing?",
+  },
+  {
+    user: "user2",
+    text: "Three great applications of quantum computing are: Optimization of complex problems, Drug Discovery, and Cryptography.",
+  },
+];
 
 /**
  * Loader function for fetching contact details based on the contactId parameter.
@@ -45,7 +75,6 @@ export async function action({ request, params }) {
  * Also includes options for editing, deleting, and marking as a favorite.
  */
 export default function Contact() {
-
   const { contact } = useLoaderData();
   const contacts = {
     first: "Your",
@@ -54,6 +83,31 @@ export default function Contact() {
     twitter: "your_handle",
     notes: "Some notes",
     favorite: true,
+  };
+  const [messages, setMessages] = useState(initialMessages);
+  const renderMessages = () => {
+    return messages.map((message, index) => (
+      <div
+        key={index}
+        className={`flex items-start${
+          message.user === "user2" ? " flex-row-reverse" : ""
+        }`}
+      >
+        <img
+          className="mr-2 h-8 w-8 rounded-full"
+          src={`https://dummyimage.com/128x128/363536/ffffff&text=${message.user.charAt(
+            0
+          )}`}
+        />
+        <div
+          className={`flex min-h-[85px] rounded-b-xl rounded-tl-xl bg-slate-50 p-4 dark:bg-slate-800 sm:min-h-0 sm:max-w-md md:max-w-2xl${
+            message.user === "user2" ? " ml-auto" : ""
+          }`}
+        >
+          <p>{message.text}</p>
+        </div>
+      </div>
+    ));
   };
 
   return (
@@ -71,8 +125,7 @@ export default function Contact() {
             </>
           ) : (
             <i>No Name</i>
-          )}{' '}
-
+          )}{" "}
           {contact.twitter && (
             <p>
               <a
@@ -98,7 +151,7 @@ export default function Contact() {
               onSubmit={(event) => {
                 if (
                   !window.confirm(
-                    'Please confirm you want to delete this record.'
+                    "Please confirm you want to delete this record."
                   )
                 ) {
                   event.preventDefault();
@@ -115,187 +168,14 @@ export default function Contact() {
         {/* Prompt Messages Container - Modify the height according to your need */}
         <div className="flex h-[85vh] w-full flex-col">
           {/* Prompt Messages */}
-          <div
-            className="flex-1 space-y-6 overflow-y-auto rounded-xl bg-slate-200 p-4 text-sm leading-6 text-slate-900 shadow-sm dark:bg-slate-900 dark:text-slate-300 sm:text-base sm:leading-7"
-          >
-            <div className="flex items-start">
-              <img
-                className="mr-2 h-8 w-8 rounded-full"
-                src="https://dummyimage.com/128x128/363536/ffffff&text=J"
-              />
-              <div
-                className="flex rounded-b-xl rounded-tr-xl bg-slate-50 p-4 dark:bg-slate-800 sm:max-w-md md:max-w-2xl"
-              >
-                <p>Explain quantum computing in simple terms</p>
-              </div>
-            </div>
-            <div className="flex flex-row-reverse items-start">
-              <img
-                className="ml-2 h-8 w-8 rounded-full"
-                src="https://dummyimage.com/128x128/354ea1/ffffff&text=G"
-              />
-
-              <div
-                className="flex min-h-[85px] rounded-b-xl rounded-tl-xl bg-slate-50 p-4 dark:bg-slate-800 sm:min-h-0 sm:max-w-md md:max-w-2xl"
-              >
-                <p>
-                  Certainly! Quantum computing is a new type of computing that relies on
-                  the principles of quantum physics. Traditional computers, like the one
-                  you might be using right now, use bits to store and process
-                  information. These bits can represent either a 0 or a 1. In contrast,
-                  quantum computers use quantum bits, or qubits.<br /><br />
-                  Unlike bits, qubits can represent not only a 0 or a 1 but also a
-                  superposition of both states simultaneously. This means that a qubit
-                  can be in multiple states at once, which allows quantum computers to
-                  perform certain calculations much faster and more efficiently
-                </p>
-              </div>
-              <div
-                className="mr-2 mt-1 flex flex-col-reverse gap-2 text-slate-500 sm:flex-row"
-              >
-                <button className="hover:text-blue-600" type="button">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    viewBox="0 0 24 24"
-                    strokeWidth="2"
-                    stroke="currentColor"
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                    <path
-                      d="M8 8m0 2a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2z"
-                    ></path>
-                    <path
-                      d="M16 8v-2a2 2 0 0 0 -2 -2h-8a2 2 0 0 0 -2 2v8a2 2 0 0 0 2 2h2"
-                    ></path>
-                  </svg>
-                </button>
-                <button className="hover:text-blue-600" type="button">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    viewBox="0 0 24 24"
-                    strokeWidth="2"
-                    stroke="currentColor"
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                    <path
-                      d="M7 13v-8a1 1 0 0 0 -1 -1h-2a1 1 0 0 0 -1 1v7a1 1 0 0 0 1 1h3a4 4 0 0 1 4 4v1a2 2 0 0 0 4 0v-5h3a2 2 0 0 0 2 -2l-1 -5a2 3 0 0 0 -2 -2h-7a3 3 0 0 0 -3 3"
-                    ></path>
-                  </svg>
-                </button>
-                <button className="hover:text-blue-600">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    viewBox="0 0 24 24"
-                    strokeWidth="2"
-                    stroke="currentColor"
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                    <path
-                      d="M7 11v8a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1v-7a1 1 0 0 1 1 -1h3a4 4 0 0 0 4 -4v-1a2 2 0 0 1 4 0v5h3a2 2 0 0 1 2 2l-1 5a2 3 0 0 1 -2 2h-7a3 3 0 0 1 -3 -3"
-                    ></path>
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <div className="flex items-start">
-              <img
-                className="mr-2 h-8 w-8 rounded-full"
-                src="https://dummyimage.com/128x128/363536/ffffff&text=J"
-              />
-              <div
-                className="flex rounded-b-xl rounded-tr-xl bg-slate-50 p-4 dark:bg-slate-800 sm:max-w-md md:max-w-2xl"
-              >
-                <p>What are three great applications of quantum computing?</p>
-              </div>
-            </div>
-            <div className="flex flex-row-reverse items-start">
-              <img
-                className="ml-2 h-8 w-8 rounded-full"
-                src="https://dummyimage.com/128x128/354ea1/ffffff&text=G"
-              />
-              <div
-                className="flex min-h-[85px] rounded-b-xl rounded-tl-xl bg-slate-50 p-4 dark:bg-slate-800 sm:min-h-0 sm:max-w-md md:max-w-2xl"
-              >
-                <p>
-                  Three great applications of quantum computing are: Optimization of
-                  complex problems, Drug Discovery and Cryptography.
-                </p>
-              </div>
-              <div
-                className="mr-2 mt-1 flex flex-col-reverse gap-2 text-slate-500 sm:flex-row"
-              >
-                <button className="hover:text-blue-600" type="button">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    viewBox="0 0 24 24"
-                    strokeWidth="2"
-                    stroke="currentColor"
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                    <path
-                      d="M8 8m0 2a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2z"
-                    ></path>
-                    <path
-                      d="M16 8v-2a2 2 0 0 0 -2 -2h-8a2 2 0 0 0 -2 2v8a2 2 0 0 0 2 2h2"
-                    ></path>
-                  </svg>
-                </button>
-                <button className="hover:text-blue-600" type="button">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    viewBox="0 0 24 24"
-                    strokeWidth="2"
-                    stroke="currentColor"
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                    <path
-                      d="M7 13v-8a1 1 0 0 0 -1 -1h-2a1 1 0 0 0 -1 1v7a1 1 0 0 0 1 1h3a4 4 0 0 1 4 4v1a2 2 0 0 0 4 0v-5h3a2 2 0 0 0 2 -2l-1 -5a2 3 0 0 0 -2 -2h-7a3 3 0 0 0 -3 3"
-                    ></path>
-                  </svg>
-                </button>
-                <button className="hover:text-blue-600">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    viewBox="0 0 24 24"
-                    strokeWidth="2"
-                    stroke="currentColor"
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                    <path
-                      d="M7 11v8a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1v-7a1 1 0 0 1 1 -1h3a4 4 0 0 0 4 -4v-1a2 2 0 0 1 4 0v5h3a2 2 0 0 1 2 2l-1 5a2 3 0 0 1 -2 2h-7a3 3 0 0 1 -3 -3"
-                    ></path>
-                  </svg>
-                </button>
-              </div>
-            </div>
+          <div className="flex-1 space-y-6 overflow-y-auto rounded-xl bg-slate-200 p-4 text-sm leading-6 text-slate-900 shadow-sm dark:bg-slate-900 dark:text-slate-300 sm:text-base sm:leading-7">
+            {renderMessages()}
           </div>
           {/* Prompt message input */}
           <form className="mt-2">
-            <label htmlFor="chat-input" className="sr-only">Enter your prompt</label>
+            <label htmlFor="chat-input" className="sr-only">
+              Enter your prompt
+            </label>
             <div className="relative">
               <button
                 type="button"
@@ -313,9 +193,7 @@ export default function Contact() {
                   strokeLinejoin="round"
                 >
                   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                  <path
-                    d="M9 2m0 3a3 3 0 0 1 3 -3h0a3 3 0 0 1 3 3v5a3 3 0 0 1 -3 3h0a3 3 0 0 1 -3 -3z"
-                  ></path>
+                  <path d="M9 2m0 3a3 3 0 0 1 3 -3h0a3 3 0 0 1 3 3v5a3 3 0 0 1 -3 3h0a3 3 0 0 1 -3 -3z"></path>
                   <path d="M5 10a7 7 0 0 0 14 0"></path>
                   <path d="M8 21l8 0"></path>
                   <path d="M12 17l0 4"></path>
@@ -363,11 +241,7 @@ function Favorite({ contact }) {
       <button
         name="favorite"
         value={favorite ? "false" : "true"}
-        aria-label={
-          favorite
-            ? "Remove from favorites"
-            : "Add to favorites"
-        }
+        aria-label={favorite ? "Remove from favorites" : "Add to favorites"}
       >
         {favorite ? "★" : "☆"}
       </button>
