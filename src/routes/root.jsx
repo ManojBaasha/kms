@@ -7,7 +7,7 @@
  */
 
 import { Outlet, Link, useLoaderData, Form, redirect, NavLink, useNavigation, } from "react-router-dom";
-import { getContacts, createContact } from "../contacts";
+import { getContacts, createContact, updateContact } from "../contacts";
 
 /**
  * Loader function to fetch the initial list of contacts.
@@ -18,14 +18,6 @@ export async function loader() {
     return { contacts };
 }
 
-/**
- * Action function to create a new contact and redirect to its edit page.
- * @returns {Promise<Object>} - Redirects to the edit page of the newly created contact
- */
-export async function action() {
-    const contact = await createContact();
-    return redirect(`/contacts/${contact.id}/edit`);
-}
 
 /**
  * Component: Root
@@ -98,10 +90,12 @@ export default function Root() {
                     )}
                 </nav>
             </div>
-            <div id="detail" className={
-                navigation.state === "loading" ? "loading" : ""
-            }>
-                <Outlet />
+            <div id="detail" className={navigation.state === "loading" ? "loading" : ""}>
+                {navigation.state === "loading" ? (
+                    <div className="loading-bar">Loading...</div>
+                ) : (
+                    <Outlet />
+                )}
             </div>
         </>
     );

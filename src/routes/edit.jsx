@@ -17,6 +17,7 @@ import { updateContact } from "../contacts";
 export async function action({ request, params }) {
     const formData = await request.formData();
     const updates = Object.fromEntries(formData);
+    // console.log(updates);
     await updateContact(params.contactId, updates);
     return redirect(`/contacts/${params.contactId}`);
 }
@@ -50,15 +51,6 @@ export default function EditContact() {
                     defaultValue={contact.last}
                 />
             </p>
-            <label>
-                <span>Twitter</span>
-                <input
-                    type="text"
-                    name="twitter"
-                    placeholder="@jack"
-                    defaultValue={contact.twitter}
-                />
-            </label>
             <label>
                 <span>Avatar URL</span>
                 <input

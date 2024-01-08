@@ -12,13 +12,13 @@ import * as ReactDOM from "react-dom/client";
 import ErrorPage from "./error-page";
 import EditContact, { action as editAction, } from "./routes/edit";
 import { action as destroyAction } from "./routes/destroy";
-import Index from "./routes/index";
+import Index , { action as rootAction } from "./routes/index";
 import {
   createBrowserRouter,
   RouterProvider,
 } from "react-router-dom";
 import "./index.css";
-import Root, { loader as rootLoader, action as rootAction } from "./routes/root";
+import Root, { loader as rootLoader} from "./routes/root";
 import Contact, {
   loader as contactLoader,
   action as contactAction,
@@ -56,7 +56,6 @@ const router = createBrowserRouter([
     element: <Root />,
     errorElement: <ErrorPage />,
     loader: rootLoader, // gets all the contacts and display it in ascending order on the screen 
-    action: rootAction, // function to create a new contact page 
     children: [
       {
         errorElement: <ErrorPage />,
@@ -65,6 +64,7 @@ const router = createBrowserRouter([
           {
             index: true,
             element: <Index />,
+            loader: rootLoader, // gets all the contacts and display it in ascending order on the screen 
             action: rootAction, // function to create a new contact page 
           },
           {

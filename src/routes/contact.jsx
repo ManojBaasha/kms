@@ -10,8 +10,9 @@
 import { Form, useLoaderData, useFetcher } from "react-router-dom";
 import { getContact, updateContact } from "../contacts";
 import "./contact.css";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { db, auth } from "../../firebaseconfigs";
+import { getAuth } from "firebase/auth"
 import {
   collection,
   addDoc,
@@ -21,25 +22,7 @@ import {
   query,
   orderBy,
 } from "firebase/firestore";
-
-const initialMessages = [
-  {
-    user: "user1",
-    text: "Explain quantum computing in simple terms",
-  },
-  {
-    user: "user2",
-    text: "Certainly! Quantum computing is a new type of computing that relies on the principles of quantum physics...",
-  },
-  {
-    user: "user1",
-    text: "What are three great applications of quantum computing?",
-  },
-  {
-    user: "user2",
-    text: "Three great applications of quantum computing are: Optimization of complex problems, Drug Discovery, and Cryptography.",
-  },
-];
+import { useParams } from 'react-router-dom';
 
 /**
  * Loader function for fetching contact details based on the contactId parameter.
@@ -55,7 +38,8 @@ export async function loader({ params }) {
       statusText: "Not Found",
     });
   }
-  return { contact };
+  // console.log(contact);
+  return contact;
 }
 
 /**
@@ -75,7 +59,14 @@ export async function action({ request, params }) {
  * Also includes options for editing, deleting, and marking as a favorite.
  */
 export default function Contact() {
-  const { contact } = useLoaderData();
+  const contact = useLoaderData();
+  const [usermessages, setUserMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState("");
+  const auth = getAuth();
+  const user = auth.currentUser.email; //email address of the current user
+  // console.log(user);
+  const groupID = contact.groupID;
+
   const contacts = {
     first: "Your",
     last: "Name",
@@ -84,14 +75,48 @@ export default function Contact() {
     notes: "Some notes",
     favorite: true,
   };
-  const [messages, setMessages] = useState(initialMessages);
+  const messagesRef = collection(db, "messages");
+  // console.log("groupid", groupID, "useremail", user);
+
+  useEffect(() => {
+    // console.log(usermessages);
+    const queryMessages = query(
+      messagesRef,
+      where("groupID", "==", groupID),
+      orderBy("createdAt")
+    );
+    const unsuscribe = onSnapshot(queryMessages, (snapshot) => {
+      let messages = [];
+      snapshot.forEach((doc) => {
+        messages.push({ ...doc.data(), id: doc.id });
+      })
+      setUserMessages(messages);
+
+    });
+    return () => unsuscribe();
+  }, []);
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    if (newMessage === "") return;
+    await addDoc(messagesRef, {
+      text: newMessage,
+      createdAt: serverTimestamp(),
+      user: user,
+      groupID,
+    });
+    setNewMessage("");
+  }
+
   const renderMessages = () => {
-    return messages.map((message, index) => (
+    return  (
+      <div>
+      {usermessages.map((message) => (
       <div
-        key={index}
-        className={`flex items-start${
-          message.user === "user2" ? " flex-row-reverse" : ""
-        }`}
+        key={message.id}
+        className={`flex items-start${message.user === user ? " flex-row-reverse" : ""
+          }`}
       >
         <img
           className="mr-2 h-8 w-8 rounded-full"
@@ -100,15 +125,16 @@ export default function Contact() {
           )}`}
         />
         <div
-          className={`flex min-h-[85px] rounded-b-xl rounded-tl-xl bg-slate-50 p-4 dark:bg-slate-800 sm:min-h-0 sm:max-w-md md:max-w-2xl${
-            message.user === "user2" ? " ml-auto" : ""
-          }`}
+          className={`flex min-h-[85px] rounded-b-xl rounded-tl-xl bg-slate-50 p-4 dark:bg-slate-800 sm:min-h-0 sm:max-w-md md:max-w-2xl${message.user === user ? " ml-auto" : ""
+            }`}
         >
           <p>{message.text}</p>
         </div>
       </div>
-    ));
-  };
+    ))}
+    </div>
+    );
+  }
 
   return (
     <div className="chat-container">
@@ -166,13 +192,13 @@ export default function Contact() {
 
       <div className="chat-messages">
         {/* Prompt Messages Container - Modify the height according to your need */}
-        <div className="flex h-[85vh] w-full flex-col">
+        <div className="flex h-[80vh] w-full flex-col">
           {/* Prompt Messages */}
           <div className="flex-1 space-y-6 overflow-y-auto rounded-xl bg-slate-200 p-4 text-sm leading-6 text-slate-900 shadow-sm dark:bg-slate-900 dark:text-slate-300 sm:text-base sm:leading-7">
             {renderMessages()}
           </div>
           {/* Prompt message input */}
-          <form className="mt-2">
+          <form onSubmit={handleSubmit} className="mt-2">
             <label htmlFor="chat-input" className="sr-only">
               Enter your prompt
             </label>
@@ -200,13 +226,16 @@ export default function Contact() {
                 </svg>
                 <span className="sr-only">Use voice input</span>
               </button>
-              <textarea
+              <input
                 id="chat-input"
+                type="text"
+                value={newMessage}
+                onChange={(event) => setNewMessage(event.target.value)}
                 className="block w-full resize-none rounded-xl border-none bg-slate-200 p-4 pl-10 pr-20 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 dark:bg-slate-900 dark:text-slate-200 dark:placeholder-slate-400 dark:focus:ring-blue-600 sm:text-base"
-                placeholder="Enter your prompt"
+                placeholder="Enter message here"
                 rows="1"
                 required
-              ></textarea>
+              ></input>
               <button
                 type="submit"
                 className="absolute bottom-2 right-2.5 rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 sm:text-base"
