@@ -17,7 +17,7 @@ import { updateContact } from "../contacts";
 export async function action({ request, params }) {
     const formData = await request.formData();
     const updates = Object.fromEntries(formData);
-    // console.log(updates);
+    // console.log(params.contactId);
     await updateContact(params.contactId, updates);
     return redirect(`/contacts/${params.contactId}`);
 }
@@ -29,8 +29,9 @@ export async function action({ request, params }) {
  * @returns {JSX.Element} - Edit Contact form component
  */
 export default function EditContact() {
-    const { contact } = useLoaderData();
+    const contact = useLoaderData();
     const navigate = useNavigate();
+    // console.log(contact);
 
     return (
         <Form method="post" id="contact-form">

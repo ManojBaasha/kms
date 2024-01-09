@@ -58,9 +58,9 @@ export default function Root() {
                     {contacts.length ? (
                         <ul>
                             {contacts.map((contact) => (
-                                <li key={contact.id}>
+                                <li key={contact.groupID}>
                                     <NavLink
-                                        to={`contacts/${contact.id}`}
+                                        to={`contacts/${contact.groupID}`}
                                         className={({ isActive, isPending }) =>
                                             isActive
                                                 ? "active"
@@ -69,7 +69,7 @@ export default function Root() {
                                                     : ""
                                         }
                                     >
-                                        <Link to={`contacts/${contact.id}`}>
+                                        <Link to={`contacts/${contact.groupID}`}>
                                             {contact.first || contact.last ? (
                                                 <>
                                                     {contact.first} {contact.last}

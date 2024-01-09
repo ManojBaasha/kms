@@ -3,7 +3,7 @@ import { matchSorter } from "match-sorter";
 import sortBy from "sort-by";
 import { getAuth } from "firebase/auth"
 import { db } from "../firebaseconfigs";
-import { collection, addDoc, doc, onSnapshot, DocumentSnapshot, setDoc, query, where, getDocs } from "firebase/firestore";
+import { collection, addDoc, doc, onSnapshot, DocumentSnapshot, setDoc, query, where, getDocs, updateDoc } from "firebase/firestore";
 
 const animalNames = [
   "fox", "lion", "tiger", "mouse", "crab",
@@ -26,14 +26,34 @@ const getRandomElement = (array) => {
   return array[randomIndex];
 };
 
-export async function getContacts(query) {
-  await fakeNetwork(`getContacts:${query}`);
-  let contacts = await localforage.getItem("contacts");
-  // console.log(contacts)
-  if (!contacts) contacts = [];
-  if (query) {
-    contacts = matchSorter(contacts, query, { keys: ["first", "last"] });
+export async function getContacts(querySearch) {
+  await fakeNetwork();
+  // let contacts = await localforage.getItem("contacts");
+  const auth = getAuth();
+  let user = "";
+  let contacts = [];
+  // const user = auth.currentUser.email; //email address of the current user
+  if (auth.currentUser === null || auth.currentUser === undefined) {
+    return contacts = [];
+  } else {
+    // Access the 'email' property
+    user = auth.currentUser.email;
   }
+  try {
+    const groupsRef = collection(db, "groups")
+    const q = query(groupsRef, where("user", "==", user));
+    const querySnapshot = await getDocs(q);
+    querySnapshot.forEach((doc) =>{
+      contacts.push(doc.data());
+    });
+    // console.log(contact);
+  }
+  catch (error) {
+    console.error('Error getting contact:', error);
+    throw error; // You might want to handle or log the error appropriately
+  }
+  // console.log(contacts);
+  if (!contacts) contacts = [];
   return contacts.sort(sortBy("last", "createdAt"));
 
 }
@@ -116,23 +136,29 @@ export async function getContact(groupID) {
   return contact;
 }
 
-export async function updateContact(id, updates) {
+export async function updateContact(groupID, updates) {
   await fakeNetwork();
-  let contacts = await localforage.getItem("contacts");
-  let contact = contacts.find(contact => contact.id === id);
-  if (!contact) throw new Error("No contact found for", id);
-  Object.assign(contact, updates);
+  // let contacts = await localforage.getItem("contacts");
+  // let contact = contacts.find(contact => contact.id === id);
+  // if (!contact) throw new Error("No contact found for", id);
+  // Object.assign(contact, updates);
   // Get the reference to the document in Firestore
-  const contactRef = doc(db, "groups", contact.docref);
   // Add the updated contact to Firestore in the "groups" collection
+  let contact = [];
   try {
-
-    setDoc(contactRef, { capital: true }, { merge: true });
+    const groupsRef = collection(db, "groups")
+    const q = query(groupsRef, where("groupID", "==", groupID));
+    const querySnapshot = await getDocs(q);
+    contact = querySnapshot.docs[0].data();
+    let contactref = querySnapshot.docs[0].ref;
+    await updateDoc(contactref, updates);
+      // setDoc(contactRef, { capital: true }, { merge: true });
   } catch (error) {
     console.error("Error Updating contact to Firestore:", error);
     throw error; // Rethrow the error if needed
   }
-  await set(contacts);
+  // await set(contacts);
+  // console.log(contact);
   return contact;
 }
 
