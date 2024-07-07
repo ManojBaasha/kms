@@ -8,6 +8,7 @@
 
 import { Outlet, Link, useLoaderData, Form, redirect, NavLink, useNavigation, } from "react-router-dom";
 import { getContacts, createContact, updateContact } from "../contacts";
+import { useEffect } from "react";
 
 /**
  * Loader function to fetch the initial list of contacts.
